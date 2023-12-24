@@ -148,6 +148,7 @@ function encryptDecrypt(input, encryptParams, decryptParams, keys) {
   logbuf('Encrypted', encrypted);
   var decrypted = ece.decrypt(encrypted, decryptParams);
   logbuf('Decrypted', decrypted);
+  logbuf('input    ', input);
   assert.equal(Buffer.compare(input, decrypted), 0);
 
   saveDump({

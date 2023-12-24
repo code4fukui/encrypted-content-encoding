@@ -16,6 +16,7 @@
 import { Base64URL as base64 } from "https://code4fukui.github.io/Base64URL/Base64URL.js";
 import { Buffer } from "https://taisukef.github.io/buffer/Buffer.js";
 import crypto from "node:crypto";
+import * as crypto_node from "./crypto_node.js";
 
 /*
 crypto.randomBytes = (len) => {
@@ -366,9 +367,12 @@ function decryptRecord(key, counter, buffer, header, last) {
   keylog('decrypt', buffer);
   var nonce = generateNonce(key.nonce, counter);
   console.log(AES_GCM, key.key.length, nonce.length, buffer.slice(buffer.length - TAG_LENGTH));
-  var gcm = crypto.createDecipheriv(AES_GCM, key.key, nonce);
-  gcm.setAuthTag(buffer.slice(buffer.length - TAG_LENGTH));
-  var data = gcm.update(buffer.slice(0, buffer.length - TAG_LENGTH));
+  const tag = buffer.slice(buffer.length - TAG_LENGTH);
+  var gcm = crypto_node.createDecipheriv(AES_GCM, key.key, nonce, tag);
+  //gcm.setAuthTag(tag);
+  //var data = gcm.update(buffer.slice(0, buffer.length - TAG_LENGTH));
+  gcm.update(buffer.slice(0, buffer.length - TAG_LENGTH));
+  const data = gcm.final();
   //data = Buffer.concat([data, gcm.final()]);
   keylog('decrypted', data);
   if (header.version !== 'aes128gcm') {
@@ -430,10 +434,10 @@ function encryptRecord(key, counter, buffer, pad, header, last) {
   console.log("block", key, counter, buffer, pad, header, last);
   pad = pad || 0;
   var nonce = generateNonce(key.nonce, counter);
-  var gcm = crypto.createCipheriv(AES_GCM, key.key, nonce);
+  var gcm = crypto_node.createCipheriv(AES_GCM, key.key, nonce);
   console.log("CIPH", AES_GCM, key.key.length, nonce.length, nonce, gcm);
 
-  var ciphertext = [];
+  //var ciphertext = [];
   var padSize = PAD_SIZE[header.version];
   var padding = Buffer.alloc(pad + padSize);
   padding.fill(0);
@@ -443,8 +447,10 @@ function encryptRecord(key, counter, buffer, pad, header, last) {
     padding.writeUIntBE(pad, 0, padSize);
     keylog('padding', padding);
     //ciphertext.push(gcm.update(padding));
+    gcm.update(padding);
     //ciphertext.push(gcm.update(buffer));
-    ciphertext.push(gcm.update(Buffer.concat([padding, buffer])));
+    gcm.update(buffer);
+    //ciphertext.push(gcm.update(Buffer.concat([padding, buffer])));
     console.log("PAD", padding, buffer);
 
     if (!last && padding.length + buffer.length < header.rs) {
@@ -454,19 +460,23 @@ function encryptRecord(key, counter, buffer, pad, header, last) {
     padding.writeUIntBE(last ? 2 : 1, 0, 1);
     keylog('padding', padding);
     //ciphertext.push(gcm.update(buffer));
+    gcm.update(buffer)
     //ciphertext.push(gcm.update(padding));
-    ciphertext.push(gcm.update(Buffer.concat([buffer, padding])));
+    gcm.update(padding)
+    //ciphertext.push(gcm.update(Buffer.concat([buffer, padding])));
     console.log("PAD2", padding, buffer);
   }
 
-  gcm.final();
+  const ciphertext = gcm.final();
   var tag = gcm.getAuthTag();
   console.log("tag", tag, ciphertext);
   if (tag.length !== TAG_LENGTH) {
     throw new Error('invalid tag generated');
   }
-  ciphertext.push(tag);
-  return keylog('encrypted', Buffer.concat(ciphertext));
+  const encrypted = Buffer.concat([ciphertext, tag]);
+  return keylog('encrypted', encrypted);
+  //ciphertext.push(tag);
+  //return keylog('encrypted', Buffer.concat(ciphertext));
 }
 
 function writeHeader(header) {

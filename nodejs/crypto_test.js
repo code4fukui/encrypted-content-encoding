@@ -1,14 +1,24 @@
 import crypto from "node:crypto";
-import { Buffer } from "https://taisukef.github.io/buffer/Buffer.js";
+//import { Buffer } from "https://taisukef.github.io/buffer/Buffer.js";
 
 /*
 node --experimental-default-type=module crypto_test.js
 deno run crypto_test.js
 */
 
+const getSeries = (len) => {
+  const a = new Uint8Array(len);
+  for (let i = 0; i < a.length; i++) {
+    a[i] = i;
+  }
+  return Buffer.from(a);
+};
+
 const clearText = Buffer.from(new TextEncoder().encode('secret'));
-const key = crypto.randomBytes(16);
-const iv = Buffer.from(crypto.randomBytes(12));
+//const key = crypto.randomBytes(16);
+const key = getSeries(16);
+//const iv = Buffer.from(crypto.randomBytes(12));
+const iv = getSeries(12);
 const algo = 'aes-128-gcm';
 console.log(`clearText: ${clearText}`);
 
