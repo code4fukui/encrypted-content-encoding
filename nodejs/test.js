@@ -37,7 +37,7 @@ args.forEach(function(arg) {
     dumpFile = arg.substring(5);
   } else if (arg.charAt(0) === '-') {
     usage();
-    process.exit(2);
+    Deno.exit(2);
   }
 });
 
@@ -91,12 +91,10 @@ function validate() {
       ece.encrypt('hello', {});
       throw new Error('should insist on a buffer');
     } catch (e) {
-      //console.log("AAA", e)
       if (e.toString() != "Error: buffer argument must be a Buffer") {
         throw new Error("encrypt failed to reject " + JSON.stringify(v));
       }
     }
-    //console.log("ok")
   });
 }
 
