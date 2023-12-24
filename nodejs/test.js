@@ -2,6 +2,7 @@ import { Base64URL as base64 } from "https://code4fukui.github.io/Base64URL/Base
 import ece from "./ece.js";
 import { assert } from "https://code4fukui.github.io/describe/describe.js";
 import crypto from "node:crypto";
+import { Buffer } from "https://taisukef.github.io/buffer/Buffer.js";
 
 function usage() {
   console.log('Usage: node test.js [args]');
@@ -122,7 +123,7 @@ function rsoverhead(version) {
   return 18;
 }
 
-async function encryptDecrypt(input, encryptParams, decryptParams, keys) {
+function encryptDecrypt(input, encryptParams, decryptParams, keys) {
   // Fill out a default rs.
   if (!encryptParams.rs) {
     encryptParams.rs = input.length + rsoverhead(encryptParams.version) + 1;
@@ -143,9 +144,9 @@ async function encryptDecrypt(input, encryptParams, decryptParams, keys) {
   encryptParams.salt = decryptParams.salt;
   logbuf('Salt', encryptParams.salt);
 
-  var encrypted = await ece.encrypt(input, encryptParams);
+  var encrypted = ece.encrypt(input, encryptParams);
   logbuf('Encrypted', encrypted);
-  var decrypted = await ece.decrypt(encrypted, decryptParams);
+  var decrypted = ece.decrypt(encrypted, decryptParams);
   logbuf('Decrypted', decrypted);
   assert.equal(Buffer.compare(input, decrypted), 0);
 
@@ -161,17 +162,17 @@ async function encryptDecrypt(input, encryptParams, decryptParams, keys) {
   });
 }
 
-async function useExplicitKey(version) {
+function useExplicitKey(version) {
   var input = generateInput();
   var params = {
     version: version,
     key: crypto.randomBytes(16)
   };
   logbuf('Key', params.key);
-  await encryptDecrypt(input, params, params);
+  encryptDecrypt(input, params, params);
 }
 
-async function authenticationSecret(version) {
+function authenticationSecret(version) {
   var input = generateInput();
   var params = {
     version: version,
@@ -180,7 +181,7 @@ async function authenticationSecret(version) {
   };
   logbuf('Key', params.key);
   logbuf('Context', params.authSecret);
-  await encryptDecrypt(input, params, params);
+  encryptDecrypt(input, params, params);
 }
 
 function exactlyOneRecord(version) {
@@ -235,7 +236,7 @@ function tooMuchPadding(version) {
 }
 
 
-async function detectTruncation(version) {
+function detectTruncation(version) {
   if (version === 'aes128gcm') {
     return;
   }
@@ -246,7 +247,7 @@ async function detectTruncation(version) {
     rs: input.length + rsoverhead(version) - 1
   };
   var headerLen = (version === 'aes128gcm') ? 21 : 0;
-  var encrypted = await ece.encrypt(input, params);
+  var encrypted = ece.encrypt(input, params);
   var chunkLen = headerLen + params.rs;
   if (version != 'aes128gcm') {
     chunkLen += 16;
@@ -412,8 +413,8 @@ for (const version of versions) {
       data.test = test.name + ' ' + version;
       reallySaveDump(data);
     };
-    console.log(version)
-    await test(version);
+    //console.log(version)
+    test(version);
     log('----- OK');
   }
 }
