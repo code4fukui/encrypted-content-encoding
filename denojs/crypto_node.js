@@ -4,16 +4,6 @@ import { hex } from "https://code4sabae.github.io/js/hex.js";
 import { Buffer } from "https://taisukef.github.io/buffer/Buffer.js";
 import node_crypto from "node:crypto"; // for createECDH, createHmac
 
-const array2s = (ar) => {
-  const res = [];
-  for (let i = 0; i < ar.length; i++) {
-    res.push(String.fromCharCode(ar[i]));
-  }
-  const s = res.join("");
-  //console.log("a2s", ar, s);
-  return s;
-};
-
 export const createCipheriv = (alg, key, iv) => { // alg only AES-GCM
   const cipher = forge.cipher.createCipher('AES-GCM', array2s(key));
   cipher.start({
@@ -69,4 +59,14 @@ export const createECDH = (alg) => {
 };
 export const createHmac = (alg, key) => {
   return node_crypto.createHmac(alg, key);
+};
+
+const array2s = (ar) => {
+  const res = [];
+  for (let i = 0; i < ar.length; i++) {
+    res.push(String.fromCharCode(ar[i]));
+  }
+  const s = res.join("");
+  //console.log("a2s", ar, s);
+  return s;
 };
