@@ -138,7 +138,9 @@ function encryptDecrypt(input, encryptParams, decryptParams, keys) {
   assert.equal(encryptParams.authSecret, decryptParams.authSecret);
 
   // Always fill in the salt so we can log it.
-  decryptParams.salt = crypto.randomBytes(16);
+  //decryptParams.salt = crypto.randomBytes(16);
+  decryptParams.salt = getSeries(16);
+  console.log("need to rnd")
   encryptParams.salt = decryptParams.salt;
   logbuf('Salt', encryptParams.salt);
 
@@ -160,11 +162,22 @@ function encryptDecrypt(input, encryptParams, decryptParams, keys) {
   });
 }
 
+const getSeries = (len) => {
+  const a = new Uint8Array(len);
+  for (let i = 0; i < a.length; i++) {
+    a[i] = i;
+  }
+  return Buffer.from(a);
+};
+
 function useExplicitKey(version) {
-  var input = generateInput();
-  var params = {
+  //const input = generateInput();
+  const input = getSeries(32);
+  //const key = crypto.randomBytes(16);
+  const key = getSeries(16);
+  const params = {
     version: version,
-    key: crypto.randomBytes(16)
+    key,
   };
   logbuf('Key', params.key);
   encryptDecrypt(input, params, params);

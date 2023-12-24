@@ -365,10 +365,11 @@ function unpad(data, last) {
 function decryptRecord(key, counter, buffer, header, last) {
   keylog('decrypt', buffer);
   var nonce = generateNonce(key.nonce, counter);
+  console.log(AES_GCM, key.key.length, nonce.length, buffer.slice(buffer.length - TAG_LENGTH));
   var gcm = crypto.createDecipheriv(AES_GCM, key.key, nonce);
   gcm.setAuthTag(buffer.slice(buffer.length - TAG_LENGTH));
   var data = gcm.update(buffer.slice(0, buffer.length - TAG_LENGTH));
-  data = Buffer.concat([data, gcm.final()]);
+  //data = Buffer.concat([data, gcm.final()]);
   keylog('decrypted', data);
   if (header.version !== 'aes128gcm') {
     return unpadLegacy(data, header.version);
@@ -428,7 +429,9 @@ function encryptRecord(key, counter, buffer, pad, header, last) {
   keylog('encrypt', buffer);
   pad = pad || 0;
   var nonce = generateNonce(key.nonce, counter);
+  console.log(AES_GCM, key.key.length, nonce.length, nonce);
   var gcm = crypto.createCipheriv(AES_GCM, key.key, nonce);
+  //gcm.set
 
   var ciphertext = [];
   var padSize = PAD_SIZE[header.version];
@@ -453,6 +456,7 @@ function encryptRecord(key, counter, buffer, pad, header, last) {
 
   gcm.final();
   var tag = gcm.getAuthTag();
+  console.log("tag", tag);
   if (tag.length !== TAG_LENGTH) {
     throw new Error('invalid tag generated');
   }
