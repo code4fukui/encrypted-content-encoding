@@ -1,8 +1,5 @@
-'use strict';
-
-var base64 = require('urlsafe-base64');
-var crypto = require('crypto');
-var ece = require('./ece.js');
+import { Base64URL as base64 } from "https://code4fukui.github.io/Base64URL/Base64URL.js";
+import ece from "./ece.js";
 
 if (process.argv.length < 4) {
   console.warn('Usage: ' + process.argv.slice(0, 2).join(' ') +

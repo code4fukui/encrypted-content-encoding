@@ -1,24 +1,23 @@
-'use strict';
+import { Base64URL as base64 } from "https://code4fukui.github.io/Base64URL/Base64URL.js";
+//var crypto = require('crypto');
+//var ece = require('./ece.js');
+import ece from "./ece.js";
 
-var base64 = require('urlsafe-base64');
-var crypto = require('crypto');
-var ece = require('./ece.js');
-
-if (process.argv.length < 5) {
-  console.warn('Usage: ' + process.argv.slice(0, 2).join(' ') +
+if (Deno.args.length < 5 - 2) {
+  console.warn('Usage: ' + Deno.args.join(' ') +
                ' <auth-secret> <receiver-public> <message> [JSON args]');
-  process.exit(2);
+  Deno.exit(2);
 }
 
 
 var params = {
   version: 'aes128gcm',
-  authSecret: process.argv[2],
-  dh: process.argv[3]
+  authSecret: Deno.args[0],
+  dh: Deno.args[1]
 };
 
-if (process.argv.length > 5) {
-  var extra = JSON.parse(process.argv[5]);
+if (Deno.args.length > 5 - 2) {
+  var extra = JSON.parse(Deno.args[3]);
   Object.keys(extra).forEach(function(k) {
     params[k] = extra[k];
   });

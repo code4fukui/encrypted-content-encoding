@@ -1,9 +1,7 @@
-'use strict';
-
-var crypto = require('crypto');
-var ece = require('./ece.js');
-var base64 = require('urlsafe-base64');
-var assert = require('assert');
+import { Base64URL as base64 } from "https://code4fukui.github.io/Base64URL/Base64URL.js";
+import ece from "./ece.js";
+import { assert } from "https://code4fukui.github.io/describe/describe.js";
+import crypto from "node:crypto";
 
 function usage() {
   console.log('Usage: node test.js [args]');
@@ -15,7 +13,7 @@ function usage() {
   console.log('  "max=<n>" sets the maximum input size');
   console.log('  "dump[=file]" log info to ../encrypt_data.json or the specified file');
 }
-var args = process.argv.slice(2);
+var args = Deno.args;
 var minLen = 1;
 var maxLen = 100;
 var plaintext;
@@ -92,10 +90,12 @@ function validate() {
       ece.encrypt('hello', {});
       throw new Error('should insist on a buffer');
     } catch (e) {
+      //console.log("AAA", e)
       if (e.toString() != "Error: buffer argument must be a Buffer") {
         throw new Error("encrypt failed to reject " + JSON.stringify(v));
       }
     }
+    //console.log("ok")
   });
 }
 
@@ -122,7 +122,7 @@ function rsoverhead(version) {
   return 18;
 }
 
-function encryptDecrypt(input, encryptParams, decryptParams, keys) {
+async function encryptDecrypt(input, encryptParams, decryptParams, keys) {
   // Fill out a default rs.
   if (!encryptParams.rs) {
     encryptParams.rs = input.length + rsoverhead(encryptParams.version) + 1;
@@ -143,9 +143,9 @@ function encryptDecrypt(input, encryptParams, decryptParams, keys) {
   encryptParams.salt = decryptParams.salt;
   logbuf('Salt', encryptParams.salt);
 
-  var encrypted = ece.encrypt(input, encryptParams);
+  var encrypted = await ece.encrypt(input, encryptParams);
   logbuf('Encrypted', encrypted);
-  var decrypted = ece.decrypt(encrypted, decryptParams);
+  var decrypted = await ece.decrypt(encrypted, decryptParams);
   logbuf('Decrypted', decrypted);
   assert.equal(Buffer.compare(input, decrypted), 0);
 
@@ -161,17 +161,17 @@ function encryptDecrypt(input, encryptParams, decryptParams, keys) {
   });
 }
 
-function useExplicitKey(version) {
+async function useExplicitKey(version) {
   var input = generateInput();
   var params = {
     version: version,
     key: crypto.randomBytes(16)
   };
   logbuf('Key', params.key);
-  encryptDecrypt(input, params, params);
+  await encryptDecrypt(input, params, params);
 }
 
-function authenticationSecret(version) {
+async function authenticationSecret(version) {
   var input = generateInput();
   var params = {
     version: version,
@@ -180,7 +180,7 @@ function authenticationSecret(version) {
   };
   logbuf('Key', params.key);
   logbuf('Context', params.authSecret);
-  encryptDecrypt(input, params, params);
+  await encryptDecrypt(input, params, params);
 }
 
 function exactlyOneRecord(version) {
@@ -235,7 +235,7 @@ function tooMuchPadding(version) {
 }
 
 
-function detectTruncation(version) {
+async function detectTruncation(version) {
   if (version === 'aes128gcm') {
     return;
   }
@@ -246,11 +246,12 @@ function detectTruncation(version) {
     rs: input.length + rsoverhead(version) - 1
   };
   var headerLen = (version === 'aes128gcm') ? 21 : 0;
-  var encrypted = ece.encrypt(input, params);
+  var encrypted = await ece.encrypt(input, params);
   var chunkLen = headerLen + params.rs;
   if (version != 'aes128gcm') {
     chunkLen += 16;
   }
+  console.log(chunkLen, encrypted, encrypted.length)
   assert.ok(chunkLen < encrypted.length);
   encrypted = encrypted.slice(0, chunkLen);
   logbuf('Encrypted', encrypted);
@@ -394,9 +395,9 @@ function useCustomCallback(version) {
 }
 
 validate();
-filterTests([ 'aesgcm', 'aes128gcm' ])
-  .forEach(function(version) {
-    filterTests([ useExplicitKey,
+const versions = filterTests([ 'aesgcm', 'aes128gcm' ]);
+for (const version of versions) {
+  const tests = filterTests([ useExplicitKey,
                   authenticationSecret,
                   exactlyOneRecord,
                   padTinyRecord,
@@ -404,17 +405,18 @@ filterTests([ 'aesgcm', 'aes128gcm' ])
                   useDH,
                   checkExamples,
                   useCustomCallback
-                ])
-      .forEach(function(test) {
-        log(version + ' Test: ' + test.name);
-        saveDump = data => {
-          data.test = test.name + ' ' + version;
-          reallySaveDump(data);
-        };
-        test(version);
-        log('----- OK');
-      });
-  });
+                ]);
+  for (const test of tests) {
+    log(version + ' Test: ' + test.name);
+    saveDump = data => {
+      data.test = test.name + ' ' + version;
+      reallySaveDump(data);
+    };
+    console.log(version)
+    await test(version);
+    log('----- OK');
+  }
+}
 
 log('All tests passed.');
 

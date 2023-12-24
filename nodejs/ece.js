@@ -1,4 +1,3 @@
-'use strict';
 /*
  * Encrypted content coding
  *
@@ -14,8 +13,23 @@
  *    This version is selected by default, unless you specify a |padSize| of 1.
  */
 
-var crypto = require('crypto');
-var base64 = require('urlsafe-base64');
+import { Base64URL as base64 } from "https://code4fukui.github.io/Base64URL/Base64URL.js";
+import { Buffer } from "https://taisukef.github.io/buffer/Buffer.js";
+import crypto from "node:crypto";
+console.log(crypto);
+
+/*
+crypto.randomBytes = (len) => {
+  const ar = new Uint8Array(len);
+  crypto.getRandomValues(ar);
+  return Buffer.from(ar);
+};
+crypto.createCipheriv = (algorithm, key, nonce) => {
+
+};
+*/
+
+
 
 var AES_GCM = 'aes-128-gcm';
 var PAD_SIZE = { 'aes128gcm': 1, 'aesgcm': 2 };
@@ -27,14 +41,16 @@ var MODE_ENCRYPT = 'encrypt';
 var MODE_DECRYPT = 'decrypt';
 
 var keylog;
+/*
 if (process.env.ECE_KEYLOG === '1') {
   keylog = function(m, k) {
     console.warn(m + ' [' + k.length + ']: ' + base64.encode(k));
     return k;
   };
 } else {
+*/
   keylog = function(m, k) { return k; };
-}
+//}
 
 /* Optionally base64 decode something. */
 function decode(b) {
@@ -44,20 +60,34 @@ function decode(b) {
   return b;
 }
 
-function HMAC_hash(key, input) {
+function toUint8Buffer(buffer) {
+  const view = new Uint8Array(buffer.length);
+  for (let i = 0; i < buffer.length; ++i) {
+    view[i] = buffer[i];
+  }
+  return view;
+}
+
+async function HMAC_hash(key, input) {
+  
   var hmac = crypto.createHmac('sha256', key);
   hmac.update(input);
   return hmac.digest();
+  
+  /*
+  const hash = await crypto.subtle.digest("SHA-256", toUint8Buffer(key));
+  return Buffer.from(hash);
+  */
 }
 
 /* HKDF as defined in RFC5869, using SHA-256 */
-function HKDF_extract(salt, ikm) {
+async function HKDF_extract(salt, ikm) {
   keylog('salt', salt);
   keylog('ikm', ikm);
-  return keylog('extract', HMAC_hash(salt, ikm));
+  return keylog('extract', await HMAC_hash(salt, ikm));
 }
 
-function HKDF_expand(prk, info, l) {
+async function HKDF_expand(prk, info, l) {
   keylog('prk', prk);
   keylog('info', info);
   var output = Buffer.alloc(0);
@@ -67,15 +97,15 @@ function HKDF_expand(prk, info, l) {
   var cbuf = Buffer.alloc(1);
   while (output.length < l) {
     cbuf.writeUIntBE(++counter, 0, 1);
-    T = HMAC_hash(prk, Buffer.concat([T, info, cbuf]));
+    T = await HMAC_hash(prk, Buffer.concat([T, info, cbuf]));
     output = Buffer.concat([output, T]);
   }
 
   return keylog('expand', output.slice(0, l));
 }
 
-function HKDF(salt, ikm, info, len) {
-  return HKDF_expand(HKDF_extract(salt, ikm), info, len);
+async function HKDF(salt, ikm, info, len) {
+  return await HKDF_expand(await HKDF_extract(salt, ikm), info, len);
 }
 
 function info(base, context) {
@@ -117,7 +147,7 @@ function extractDH(header, mode) {
   };
 }
 
-function extractSecretAndContext(header, mode) {
+async function extractSecretAndContext(header, mode) {
   var result = { secret: null, context: Buffer.alloc(0) };
   if (header.key) {
     result.secret = header.key;
@@ -135,7 +165,7 @@ function extractSecretAndContext(header, mode) {
   keylog('secret', result.secret);
   keylog('context', result.context);
   if (header.authSecret) {
-    result.secret = HKDF(header.authSecret, result.secret,
+    result.secret = await HKDF(header.authSecret, result.secret,
                          info('auth', Buffer.alloc(0)), SHA_256_LENGTH);
     keylog('authsecret', result.secret);
   }
@@ -203,7 +233,7 @@ function extractSecret(header, mode, keyLookupCallback) {
   return webpushSecret(header, mode);
 }
 
-function deriveKeyAndNonce(header, mode, lookupKeyCallback) {
+async function deriveKeyAndNonce(header, mode, lookupKeyCallback) {
   if (!header.salt) {
     throw new Error('must include a salt parameter for ' + header.version);
   }
@@ -212,7 +242,7 @@ function deriveKeyAndNonce(header, mode, lookupKeyCallback) {
   var secret;
   if (header.version === 'aesgcm') {
     // old
-    var s = extractSecretAndContext(header, mode, lookupKeyCallback);
+    var s = await extractSecretAndContext(header, mode, lookupKeyCallback);
     keyInfo = info('aesgcm', s.context);
     nonceInfo = info('nonce', s.context);
     secret = s.secret;
@@ -224,10 +254,10 @@ function deriveKeyAndNonce(header, mode, lookupKeyCallback) {
   } else {
     throw new Error('Unable to set context for mode ' + header.version);
   }
-  var prk = HKDF_extract(header.salt, secret);
+  var prk = await HKDF_extract(header.salt, secret);
   var result = {
-    key: HKDF_expand(prk, keyInfo, KEY_LENGTH),
-    nonce: HKDF_expand(prk, nonceInfo, NONCE_LENGTH)
+    key: await HKDF_expand(prk, keyInfo, KEY_LENGTH),
+    nonce: await HKDF_expand(prk, nonceInfo, NONCE_LENGTH)
   };
   keylog('key', result.key);
   keylog('nonce base', result.nonce);
@@ -279,6 +309,7 @@ function parseParams(params) {
 }
 
 function generateNonce(base, counter) {
+  console.log(base)
   var nonce = Buffer.from(base);
   var m = nonce.readUIntBE(nonce.length - 6, 6);
   var x = ((m ^ counter) & 0xffffff) +
@@ -363,13 +394,13 @@ function decryptRecord(key, counter, buffer, header, last) {
  *
  * The |params.privateKey| includes the private key of the receiver.
  */
-function decrypt(buffer, params, keyLookupCallback) {
+async function decrypt(buffer, params, keyLookupCallback) {
   var header = parseParams(params);
   if (header.version === 'aes128gcm') {
     var headerLength = readHeader(buffer, header);
     buffer = buffer.slice(headerLength);
   }
-  var key = deriveKeyAndNonce(header, MODE_DECRYPT, keyLookupCallback);
+  var key = await deriveKeyAndNonce(header, MODE_DECRYPT, keyLookupCallback);
   var start = 0;
   var result = Buffer.alloc(0);
 
@@ -456,7 +487,7 @@ function writeHeader(header) {
  * receiver.  |params.privateKey| is used to establish a shared secret.  Key
  * pairs can be created using |crypto.createECDH()|.
  */
-function encrypt(buffer, params, keyLookupCallback) {  
+async function encrypt(buffer, params, keyLookupCallback) {  
   if (!Buffer.isBuffer(buffer)) {
     throw new Error('buffer argument must be a Buffer');
   }
@@ -477,7 +508,7 @@ function encrypt(buffer, params, keyLookupCallback) {
     result = Buffer.alloc(0);
   }
 
-  var key = deriveKeyAndNonce(header, MODE_ENCRYPT, keyLookupCallback);
+  var key = await deriveKeyAndNonce(header, MODE_ENCRYPT, keyLookupCallback);
   var start = 0;
   var padSize = PAD_SIZE[header.version];
   var overhead = padSize;
@@ -523,7 +554,7 @@ function isFunction(object) {
   return typeof(object) === 'function';
  }
 
-module.exports = {
+export default {
   decrypt: decrypt,
   encrypt: encrypt
 };
