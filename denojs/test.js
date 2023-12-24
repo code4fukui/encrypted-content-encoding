@@ -264,7 +264,6 @@ function detectTruncation(version) {
   if (version != 'aes128gcm') {
     chunkLen += 16;
   }
-  console.log(chunkLen, encrypted, encrypted.length)
   assert.ok(chunkLen < encrypted.length);
   encrypted = encrypted.slice(0, chunkLen);
   logbuf('Encrypted', encrypted);
