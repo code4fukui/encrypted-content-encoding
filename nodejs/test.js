@@ -1,7 +1,8 @@
-import { Base64URL as base64 } from "https://code4fukui.github.io/Base64URL/Base64URL.js";
+import { base64 } from "./base64.js";
 import ece from "./ece.js";
 import { assert } from "https://code4fukui.github.io/describe/describe.js";
-import crypto from "node:crypto";
+import crypto from "node:crypto"; // for useDH
+import * as crypto_node from "./crypto_node.js";
 import { Buffer } from "https://taisukef.github.io/buffer/Buffer.js";
 
 function usage() {
@@ -108,7 +109,7 @@ function generateInput(min) {
     input = plaintext;
   } else {
     var len = Math.floor((Math.random() * (maxLen - min) + min));
-    input = crypto.randomBytes(len);
+    input = crypto_node.randomBytes(len);
   }
   logbuf('Input', input);
   return input;
@@ -138,9 +139,9 @@ function encryptDecrypt(input, encryptParams, decryptParams, keys) {
   assert.equal(encryptParams.authSecret, decryptParams.authSecret);
 
   // Always fill in the salt so we can log it.
-  //decryptParams.salt = crypto.randomBytes(16);
-  decryptParams.salt = getSeries(16);
-  console.log("need to rnd")
+  decryptParams.salt = crypto_node.randomBytes(16);
+  //decryptParams.salt = getSeries(16);
+  //console.log("need to rnd")
   encryptParams.salt = decryptParams.salt;
   logbuf('Salt', encryptParams.salt);
 
@@ -172,10 +173,10 @@ const getSeries = (len) => {
 };
 
 function useExplicitKey(version) {
-  //const input = generateInput();
-  const input = getSeries(32);
-  //const key = crypto.randomBytes(16);
-  const key = getSeries(16);
+  const input = generateInput();
+  //const input = getSeries(32);
+  const key = crypto_node.randomBytes(16);
+  //const key = getSeries(16);
   const params = {
     version: version,
     key,
@@ -188,8 +189,8 @@ function authenticationSecret(version) {
   var input = generateInput();
   var params = {
     version: version,
-    key: crypto.randomBytes(16),
-    authSecret: crypto.randomBytes(16)
+    key: crypto_node.randomBytes(16),
+    authSecret: crypto_node.randomBytes(16)
   };
   logbuf('Key', params.key);
   logbuf('Context', params.authSecret);
@@ -200,7 +201,7 @@ function exactlyOneRecord(version) {
   var input = generateInput(1);
   var params = {
     version: version,
-    key: crypto.randomBytes(16),
+    key: crypto_node.randomBytes(16),
     rs: input.length + rsoverhead(version)
   };
   encryptDecrypt(input, params, params);
@@ -212,7 +213,7 @@ function padTinyRecord(version) {
   var input = generateInput(1);
   var params = {
     version: version,
-    key: crypto.randomBytes(16),
+    key: crypto_node.randomBytes(16),
     rs: rsoverhead(version) + 1,
     pad: 2
   };
@@ -231,7 +232,7 @@ function tooMuchPadding(version) {
   var input = generateInput(1);
   var params = {
     version: version,
-    key: crypto.randomBytes(16),
+    key: crypto_node.randomBytes(16),
     rs: rs,
     pad: rs
   };
@@ -255,7 +256,7 @@ function detectTruncation(version) {
   var input = generateInput(2);
   var params = {
     version: version,
-    key: crypto.randomBytes(16),
+    key: crypto_node.randomBytes(16),
     rs: input.length + rsoverhead(version) - 1
   };
   var headerLen = (version === 'aes128gcm') ? 21 : 0;
@@ -300,7 +301,7 @@ function useDH(version) {
   var input = generateInput();
   var encryptParams = {
     version: version,
-    authSecret: crypto.randomBytes(16),
+    authSecret: crypto_node.randomBytes(16),
     dh: staticKey.getPublicKey()
   };
   var decryptParams = {
@@ -411,13 +412,13 @@ validate();
 const versions = filterTests([ 'aesgcm', 'aes128gcm' ]);
 for (const version of versions) {
   const tests = filterTests([ useExplicitKey,
-                  /*authenticationSecret,
+                  authenticationSecret,
                   exactlyOneRecord,
                   padTinyRecord,
                   detectTruncation,
                   useDH,
                   checkExamples,
-                  useCustomCallback*/
+                  useCustomCallback,
                 ]);
   for (const test of tests) {
     log(version + ' Test: ' + test.name);

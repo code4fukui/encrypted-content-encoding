@@ -55,3 +55,9 @@ export const createDecipheriv = (alg, key, iv, tag) => {
     },
   };
 };
+
+export const randomBytes = (len) => {
+  const n = new Uint8Array(len);
+  crypto.getRandomValues(n);
+  return Buffer.from(n);
+};
