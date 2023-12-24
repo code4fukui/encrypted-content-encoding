@@ -430,9 +430,8 @@ function encryptRecord(key, counter, buffer, pad, header, last) {
   console.log("block", key, counter, buffer, pad, header, last);
   pad = pad || 0;
   var nonce = generateNonce(key.nonce, counter);
-  console.log(AES_GCM, key.key.length, nonce.length, nonce);
   var gcm = crypto.createCipheriv(AES_GCM, key.key, nonce);
-  //gcm.set
+  console.log("CIPH", AES_GCM, key.key.length, nonce.length, nonce, gcm);
 
   var ciphertext = [];
   var padSize = PAD_SIZE[header.version];
@@ -457,7 +456,7 @@ function encryptRecord(key, counter, buffer, pad, header, last) {
 
   gcm.final();
   var tag = gcm.getAuthTag();
-  console.log("tag", tag);
+  console.log("tag", tag, ciphertext);
   if (tag.length !== TAG_LENGTH) {
     throw new Error('invalid tag generated');
   }
