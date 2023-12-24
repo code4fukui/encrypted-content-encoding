@@ -427,6 +427,7 @@ function decrypt(buffer, params, keyLookupCallback) {
 
 function encryptRecord(key, counter, buffer, pad, header, last) {
   keylog('encrypt', buffer);
+  console.log("block", key, counter, buffer, pad, header, last);
   pad = pad || 0;
   var nonce = generateNonce(key.nonce, counter);
   console.log(AES_GCM, key.key.length, nonce.length, nonce);
