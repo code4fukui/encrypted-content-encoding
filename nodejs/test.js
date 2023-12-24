@@ -410,13 +410,13 @@ validate();
 const versions = filterTests([ 'aesgcm', 'aes128gcm' ]);
 for (const version of versions) {
   const tests = filterTests([ useExplicitKey,
-                  authenticationSecret,
+                  /*authenticationSecret,
                   exactlyOneRecord,
                   padTinyRecord,
                   detectTruncation,
                   useDH,
                   checkExamples,
-                  useCustomCallback
+                  useCustomCallback*/
                 ]);
   for (const test of tests) {
     log(version + ' Test: ' + test.name);

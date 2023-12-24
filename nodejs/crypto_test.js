@@ -14,7 +14,8 @@ console.log(`clearText: ${clearText}`);
 
 const cipher = crypto.createCipheriv(algo, key, iv);
 let encrypted = cipher.update(clearText);
-encrypted = Buffer.concat([encrypted, cipher.final()]);
+let encrypted2 = cipher.update(clearText);
+encrypted = Buffer.concat([encrypted, encrypted2, cipher.final()]);
 const cipherTag = cipher.getAuthTag();
 console.log(`encrypted: ${encrypted}`);
 

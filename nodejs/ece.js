@@ -442,18 +442,20 @@ function encryptRecord(key, counter, buffer, pad, header, last) {
   if (header.version != 'aes128gcm') {
     padding.writeUIntBE(pad, 0, padSize);
     keylog('padding', padding);
-    ciphertext.push(gcm.update(padding));
-    ciphertext.push(gcm.update(buffer));
-    console.log("PAD", padding, buffer, header);
+    //ciphertext.push(gcm.update(padding));
+    //ciphertext.push(gcm.update(buffer));
+    ciphertext.push(gcm.update(Buffer.concat([padding, buffer])));
+    console.log("PAD", padding, buffer);
 
     if (!last && padding.length + buffer.length < header.rs) {
       throw new Error('Unable to pad to record size');
     }
   } else {
-    ciphertext.push(gcm.update(buffer));
     padding.writeUIntBE(last ? 2 : 1, 0, 1);
     keylog('padding', padding);
-    ciphertext.push(gcm.update(padding));
+    //ciphertext.push(gcm.update(buffer));
+    //ciphertext.push(gcm.update(padding));
+    ciphertext.push(gcm.update(Buffer.concat([buffer, padding])));
     console.log("PAD2", padding, buffer);
   }
 
