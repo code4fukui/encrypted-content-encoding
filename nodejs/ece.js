@@ -59,6 +59,13 @@ function decode(b) {
   return b;
 }
 
+function HMAC_hash(key, input) {
+  var hmac = crypto.createHmac('sha256', key);
+  hmac.update(input);
+  return hmac.digest();
+}
+/*
+
 function toUint8Buffer(buffer) {
   const view = new Uint8Array(buffer.length);
   for (let i = 0; i < buffer.length; ++i) {
@@ -66,18 +73,11 @@ function toUint8Buffer(buffer) {
   }
   return view;
 }
-
-function HMAC_hash(key, input) {
-  
-  var hmac = crypto.createHmac('sha256', key);
-  hmac.update(input);
-  return hmac.digest();
-  
-  /*
-  const hash = crypto.subtle.digest("SHA-256", toUint8Buffer(key));
+async function HMAC_hash(key, input) {
+  const hash = await crypto.subtle.digest("SHA-256", toUint8Buffer(key));
   return Buffer.from(hash);
-  */
 }
+*/
 
 /* HKDF as defined in RFC5869, using SHA-256 */
 function HKDF_extract(salt, ikm) {
@@ -308,7 +308,6 @@ function parseParams(params) {
 }
 
 function generateNonce(base, counter) {
-  console.log(base)
   var nonce = Buffer.from(base);
   var m = nonce.readUIntBE(nonce.length - 6, 6);
   var x = ((m ^ counter) & 0xffffff) +
