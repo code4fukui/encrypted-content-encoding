@@ -1,18 +1,26 @@
-# Encryped Content-Encoding for HTTP
+# encrypted-content-encoding
 
-[Deno](denojs), [Node.js](nodejs) and [Python](python) implementations are available.
+A simple implementation of the [HTTP encrypted content-encoding](https://tools.ietf.org/html/rfc8188).
 
-for Deno
+## Features
+- Deno, Node.js and Python implementations are available.
+
+## Usage
+
+For Deno:
 ```sh
 import ece from "https://code4fukui.github.io/encrypted-content-encoding/denojs/ece.js";
 ```
 
-for Node.js
+For Node.js:
 ```sh
 npm install http_ece
 ```
 
-for Python
+For Python:
 ```sh
 pip install http_ece
 ```
+
+## License
+The MIT License (MIT)
