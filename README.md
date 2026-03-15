@@ -1,5 +1,7 @@
 # encrypted-content-encoding
 
+> 日本語のREADMEはこちらです: [README.ja.md](README.ja.md)
+
 A simple implementation of the [HTTP encrypted content-encoding](https://tools.ietf.org/html/rfc8188).
 
 ## Features

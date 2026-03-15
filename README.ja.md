@@ -2,21 +2,6 @@
 
 [Deno](denojs), [Node.js](nodejs) および [Python](python) の実装が利用可能です。
 
-Deno向け:
-```sh
-import ece from "https://code4fukui.github.io/encrypted-content-encoding/denojs/ece.js";
-```
-
-Node.js向け:
-```sh
-npm install http_ece
-```
-
-Python向け:
-```sh
-pip install http_ece
-```
-
 ## Deno
 
 ### 使い方
