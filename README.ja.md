@@ -1,10 +1,10 @@
 # 暗号化コンテンツエンコーディング
 
-[Deno](denojs), [Node.js](nodejs) および [Python](python) の実装が利用可能です。
+このライブラリは、[HTTP 暗号化コンテンツエンコーディング](https://tools.ietf.org/html/rfc8188)の簡単な実装です。Deno、Node.js、Pythonの各実装が利用可能です。
 
-## Deno
+## 使い方
 
-### 使い方
+### Deno
 
 ```js
 import base64 from "./base64.js";
@@ -30,9 +30,7 @@ console.log(decrypted.toString());
 
 このライブラリはスタティック-エフェメラルECDHモードにも対応しています。ソースコードに詳しい説明があります。
 
-## Python
-
-### 使い方
+### Python
 
 ```python
 import http_ece
@@ -49,9 +47,7 @@ assert data == decrypted
 
 このライブラリはスタティック-エフェメラルECDHモードにも対応しています。
 
-## Node.js
-
-### 使い方
+### Node.js
 
 ```js
 var ece = require('http_ece');
@@ -70,3 +66,6 @@ require('assert').equal(decrypted.compare(data), 0);
 ```
 
 このライブラリはスタティック-エフェメラルECDHモードにも対応しています。ソースコードに詳しい説明があります。
+
+## ライセンス
+MIT License

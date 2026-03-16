@@ -25,4 +25,4 @@ pip install http_ece
 ```
 
 ## License
-The MIT License (MIT)
+MIT License — see [LICENSE](LICENSE).
