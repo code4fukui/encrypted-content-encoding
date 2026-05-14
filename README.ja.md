@@ -7,23 +7,21 @@
 ![Python package](https://github.com/martinthomson/encrypted-content-encoding/actions/workflows/python.yml/badge.svg)
 ](https://github.com/martinthomson/encrypted-content-encoding/actions/workflows/python.yml)
 
-> 日本語のREADMEはこちらです: [README.ja.md](README.ja.md)
+[HTTP Encrypted Content-Encoding](https://tools.ietf.org/html/rfc8188) (RFC 8188) のシンプルな実装です。
 
-A simple implementation of the [HTTP Encrypted Content-Encoding](https://tools.ietf.org/html/rfc8188) (RFC 8188).
+このライブラリは Deno、Node.js、Python 用の実装を提供します。
 
-This library provides implementations for Deno, Node.js, and Python.
+## 機能
 
-## Features
+-   **マルチプラットフォーム:** Deno、Node.js、Python 用のそのまま使える（ドロップイン）実装。
+-   **セキュア:** RFC 8188 で定義されている `aes128gcm` コンテンツ暗号化を実装。
+-   **鍵共有 (Key Agreement):** 直接的な対称鍵と、静的-一時的 (static-ephemeral) ECDH モードの両方をサポート。
 
--   **Multi-platform:** Drop-in implementations for Deno, Node.js, and Python.
--   **Secure:** Implements `aes128gcm` content encryption as defined in RFC 8188.
--   **Key Agreement:** Supports both direct symmetric keys and a static-ephemeral ECDH mode.
-
-## Usage
+## 使い方
 
 ### Deno
 
-Import the module directly from its URL.
+URLから直接モジュールをインポートします。
 
 ```javascript
 import ece from "https://code4fukui.github.io/encrypted-content-encoding/denojs/ece.js";
@@ -51,13 +49,13 @@ console.log(decrypted.toString()); // "I am the walrus"
 
 ### Node.js
 
-Install the package from npm:
+npmからパッケージをインストールします:
 
 ```sh
 npm install http_ece
 ```
 
-**Example:**
+**例:**
 
 ```javascript
 const ece = require('http_ece');
@@ -70,3 +68,4 @@ const params = {
 };
 
 const data
+```
